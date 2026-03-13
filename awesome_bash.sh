@@ -1,30 +1,17 @@
-## Count number of files in each sub-dir
-du -a | sed '/.*\.\/.*\/.*/!d' | cut -d/ -f2 | sort | uniq -c | sort -nr
+alias myjobs='watch -n 1 squeue --format=\"%.12i %.7P %.35j %.20S %.10M %.9l %R\" --me --sort=-p'
+alias docancelall='squeue --user $USER --format "scancel %i" | sh'
+alias gpus="watch -n 1 nvidia-smi"
+alias code=/var/tmp/build/usr/share/code/code; 
+alias gitgraph="git log --graph --all --pretty=format:'%C(auto)%h%d %s %C(black)%C(bold)%cr'"
 
-## Touch the repositories so that they don't get deleted by IST :)
-find ./someDir/ -type f -print0 | xargs -0 -P $(nproc) -n 5000 touch
-# Potentially you can add -maxdepth -mindepth to make the search faster
-
-## List all the directories without a certain file:
-# e.g. if you want to see which experiments lack a certain file:
-find ./someDir/ -maxdepth 2 -mindepth 2 -type d '!' -exec test -e "{}/model_checkpoint_final.pt" ';' -print
-
-
-## List sub-directories and create empty dirs under the same name at another path
-find ./ -type d -exec mkdir -p -- ../IMNA/{} \;
-
-## A good sync command to sync a directory with a remote directory using a proxy jump. It also ignores .png files
-## and relies on checksum (rather than timestamp) for deciding what to transfer.
-rsync -avz --checksum --exclude "*.png" -e "ssh -J user@proxy_server" experiments/ user@remote_server:copy_path
-
-## For faster deletion of large dirs
-mkdir empty && rsync -aP --delete ./empty/ ./dir_to_delete/
-
-## Clean my Notebook (e.g. for commits)
+cleannotebook(){ # Clean Jupyter Notebook outputs (for version control)
 jupyter nbconvert \
- --ClearOutputPreprocessor.enabled=True \
- --ClearMetadataPreprocessor.enabled=True \
- --to=notebook --log-level=ERROR --inplace \
-  MyNotebook.ipynb
-
-
+	--ClearOutputPreprocessor.enabled=True \
+	--ClearMetadataPreprocessor.enabled=True \
+	--to=notebook --log-level=ERROR --inplace \
+	"$1"	
+}
+count_re () { # Count Regex matches in a root dir
+    find "${1:-.}" -type f | grep -E "$2" | wc -l
+}
+export PS1='\h | \W: '
